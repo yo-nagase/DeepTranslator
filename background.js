@@ -26,33 +26,42 @@ function getApiKey() {
  */
 function translateText(text) {
   return getApiKey().then(function (apiKey) {
-    var endpoint = "https://api.openai.com/v1/chat/completions";
-    var payload = {
-      model: "gpt-3.5-turbo",
-      messages: [
-        { role: "system", content: "あなたはプロの翻訳者です。以下のテキストを翻訳してください。" },
-        { role: "user", content: text }
-      ],
-      temperature: 0.3
-    };
+    return new Promise((resolve, reject) => {
+      chrome.storage.sync.get("enableExplanation", function (data) {
+        var systemPrompt = data.enableExplanation
+          ? "あなたはプロの翻訳者です。以下のテキストを翻訳してください。"
+          : "あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説（言い回しの違いや文化的な違いなど）を追加してください。解説は「【解説】」という見出しの後に記述してください。"
 
-    return fetch(endpoint, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Authorization": "Bearer " + apiKey
-      },
-      body: JSON.stringify(payload)
-    })
-      .then(function (response) {
-        if (!response.ok) {
-          throw new Error("HTTPエラー: " + response.status);
-        }
-        return response.json();
-      })
-      .then(function (data) {
-        return data.choices[0].message.content.trim();
+        var endpoint = "https://api.openai.com/v1/chat/completions";
+        var payload = {
+          model: "gpt-4o-mini",
+          messages: [
+            { role: "system", content: systemPrompt },
+            { role: "user", content: text }
+          ],
+          temperature: 0.3
+        };
+
+        fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
+          },
+          body: JSON.stringify(payload)
+        })
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("HTTPエラー: " + response.status);
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            resolve(data.choices[0].message.content.trim());
+          })
+          .catch(reject);
       });
+    });
   });
 }
 
@@ -77,30 +86,6 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
         chrome.notifications.create({
           type: "basic",
           iconUrl: "icon.png", // 用意したアイコンファイル
-          title: "翻訳結果",
-          message: translation
-        });
-      })
-      .catch(function (err) {
-        console.error(err);
-        chrome.notifications.create({
-          type: "basic",
-          iconUrl: "icon.png",
-          title: "翻訳エラー",
-          message: err.toString()
-        });
-      });
-  }
-});
-
-// メッセージリスナーを追加
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
-  if (request.action === 'translate') {
-    translateText(request.text)
-      .then(function (translation) {
-        chrome.notifications.create({
-          type: "basic",
-          iconUrl: "icon.png",
           title: "翻訳結果",
           message: translation
         });
