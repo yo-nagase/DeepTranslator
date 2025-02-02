@@ -25,6 +25,19 @@ function createTranslationElement(originalText) {
     flex-direction: column;
   `;
 
+  // ウィンドウ外クリックで閉じる機能を追加
+  function handleClickOutside(event) {
+    if (!container.contains(event.target)) {
+      container.remove();
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }
+
+  // 少し遅延を入れてイベントリスナーを追加（即時追加すると開いた瞬間に閉じる可能性がある）
+  setTimeout(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+  }, 3000);
+
   // ヘッダー部分の作成
   const header = document.createElement('div');
   header.style.cssText = `
