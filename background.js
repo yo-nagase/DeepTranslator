@@ -65,13 +65,13 @@ function translateText(text) {
       var payload = {
         model: "gpt-4o-mini",
         messages: [
-          { 
-            role: "system", 
-            content: systemPrompt 
+          {
+            role: "system",
+            content: systemPrompt
           },
-          { 
-            role: "user", 
-            content: `翻訳対象テキスト: ${text}\n\n以下の形式で返してください：\n[翻訳]\n{翻訳文}\n\n[解説]\n{解説文}` 
+          {
+            role: "user",
+            content: `翻訳対象テキスト: ${text}\n\n以下の形式で返してください：\n[翻訳]\n{翻訳文}\n\n[解説]\n{解説文}`
           }
         ],
         temperature: 0.3
@@ -96,7 +96,7 @@ function translateText(text) {
           const parts = content.split('[解説]');
           const translation = parts[0].replace('[翻訳]', '').trim();
           const explanation = parts[1] ? parts[1].trim() : '';
-          
+
           resolve({
             translation: translation,
             explanation: explanation
@@ -115,7 +115,7 @@ function translateText(text) {
 async function textToSpeech(text) {
   const apiKey = await getApiKey();
   const endpoint = "https://api.openai.com/v1/audio/speech";
-  
+
   const response = await fetch(endpoint, {
     method: "POST",
     headers: {
@@ -137,7 +137,13 @@ async function textToSpeech(text) {
 }
 
 // 拡張機能のインストール時にコンテキストメニューを作成
-chrome.runtime.onInstalled.addListener(function () {
+chrome.runtime.onInstalled.addListener(function (details) {
+  if (details.reason === "install") {
+    chrome.tabs.create({
+      url: chrome.runtime.getURL("welcome.html")
+    });
+  }
+
   chrome.contextMenus.create({
     id: "translateText",
     title: "ChatGPTで翻訳する",

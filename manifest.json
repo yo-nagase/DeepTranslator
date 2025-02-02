@@ -31,7 +31,7 @@
     "128": "icon.png"
   },
   "web_accessible_resources": [{
-    "resources": ["icon.png"],
+    "resources": ["icon.png", "welcome.html"],
     "matches": ["<all_urls>"]
   }]
 }
