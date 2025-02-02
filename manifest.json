@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT 翻訳プラグイン",
+  "name": "Deep Translator",
   "version": "1.0",
-  "description": "選択したテキストを ChatGPT API に投げて翻訳結果を通知で表示します。",
+  "description": "ChatGPT APIを使用した高精度な翻訳と詳細な解説を提供する翻訳ツール",
   "permissions": [
     "contextMenus",
     "activeTab",
@@ -25,6 +25,9 @@
     }
   ],
   "options_page": "options.html",
+  "action": {
+    "default_popup": "history.html"
+  },
   "icons": {
     "16": "icon.png",
     "48": "icon.png",
@@ -33,5 +36,14 @@
   "web_accessible_resources": [{
     "resources": ["icon.png", "welcome.html"],
     "matches": ["<all_urls>"]
-  }]
+  }],
+  "commands": {
+    "translate-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+1",
+        "mac": "Command+Shift+1"
+      },
+      "description": "選択したテキストを翻訳"
+    }
+  }
 }

@@ -48,7 +48,7 @@ function createTranslationElement(originalText) {
 
   // タイトルの作成
   const title = document.createElement('span');
-  title.textContent = '翻訳君';
+  title.textContent = 'Deep Translator';
   title.style.cssText = `
     font-weight: bold;
     font-size: 13px;
@@ -76,9 +76,9 @@ function createTranslationElement(originalText) {
     height: 24px;
   `;
   speakButton.title = '原文を読み上げる';
-  
+
   globalSpeakButton = speakButton;
-  
+
   speakButton.onclick = () => {
     if (globalIsPlaying && globalAudio) {
       globalAudio.pause();
@@ -99,16 +99,16 @@ function createTranslationElement(originalText) {
         <path d="M10 8v8l6-4-6-4z"/>
       </svg>
     `;
-    chrome.runtime.sendMessage({ 
-      action: "speak", 
-      text: originalText 
+    chrome.runtime.sendMessage({
+      action: "speak",
+      text: originalText
     });
   };
 
   speakButton.onmouseover = () => {
     speakButton.style.opacity = '0.7';
   };
-  
+
   speakButton.onmouseout = () => {
     speakButton.style.opacity = '1';
   };
@@ -139,6 +139,7 @@ function createTranslationElement(originalText) {
   // 閉じるボタン
   const closeButton = document.createElement('button');
   closeButton.textContent = '×';
+  closeButton.title = '閉じる';
   closeButton.style.cssText = `
     position: absolute;
     top: 8px;
@@ -318,6 +319,30 @@ function createTranslationElement(originalText) {
     `;
   };
 
+  // ツールチップの表示時間を短くするためのスタイルを追加
+  const tooltipStyle = document.createElement('style');
+  tooltipStyle.textContent = `
+    [title] {
+      position: relative;
+    }
+    [title]:hover::before {
+      content: attr(title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 12px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.1s;
+    }
+  `;
+  document.head.appendChild(tooltipStyle);
+
   return {
     container,
     contentContainer,
@@ -351,7 +376,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       const elements = createTranslationElement(message.originalText);
-      
+
       if (!message.translation) {
         // ローディング表示
         elements.contentContainer.textContent = '翻訳中...';
@@ -366,8 +391,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           elements.explanationContainer.innerHTML = message.explanation;
         }
       }
-      
+
       document.body.appendChild(elements.container);
+      break;
+
+    case "shortcutPressed":
+      const selectedText = window.getSelection().toString().trim();
+      if (selectedText) {
+        chrome.runtime.sendMessage({
+          action: 'translate',
+          text: selectedText
+        });
+      }
       break;
 
     case "playAudio":
@@ -376,14 +411,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const arrayBuffer = new Uint8Array(message.audioData);
         const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
         const url = URL.createObjectURL(blob);
-        
+
         if (globalAudio) {
           globalAudio.pause();
           URL.revokeObjectURL(globalAudio.src);
         }
 
         globalAudio = new Audio(url);
-        
+
         globalAudio.onended = () => {
           globalIsPlaying = false;
           if (globalSpeakButton) {
@@ -409,7 +444,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
           globalIsPlaying = false;
         };
-        
+
         // 音声の読み込みを待ってから再生
         globalAudio.addEventListener('loadeddata', () => {
           globalAudio.play().then(() => {
@@ -462,14 +497,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // ダブルクリックイベントのリスナーを設定
-chrome.storage.sync.get('enableDoubleClick', function(data) {
+chrome.storage.sync.get('enableDoubleClick', function (data) {
   if (data.enableDoubleClick) {
-    document.addEventListener('dblclick', function() {
+    document.addEventListener('dblclick', function () {
       const selectedText = window.getSelection().toString().trim();
       if (selectedText) {
-        chrome.runtime.sendMessage({ 
-          action: 'translate', 
-          text: selectedText 
+        chrome.runtime.sendMessage({
+          action: 'translate',
+          text: selectedText
         });
       }
     });
