@@ -45,6 +45,29 @@ function createTranslationElement() {
     font-size: 16px;
   `;
 
+  // ローディングアニメーションのスタイル
+  const style = document.createElement('style');
+  style.textContent = `
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+    .loading-spinner {
+      width: 24px;
+      height: 24px;
+      border: 3px solid rgba(0, 0, 0, 0.1);
+      border-radius: 50%;
+      border-top-color: #4CAF50;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    .dark-mode .loading-spinner {
+      border: 3px solid rgba(255, 255, 255, 0.1);
+      border-top-color: #4CAF50;
+    }
+  `;
+  document.head.appendChild(style);
+
   // 閉じるボタン
   const closeButton = document.createElement('button');
   closeButton.textContent = '×';
@@ -66,6 +89,7 @@ function createTranslationElement() {
   if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
     container.style.setProperty('--chatgpt-bg-color', '#2d2d2d');
     container.style.setProperty('--chatgpt-text-color', '#ffffff');
+    container.classList.add('dark-mode');
   }
 
   // 要素を組み立て
@@ -103,11 +127,23 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
     // 新しい翻訳結果を表示
     const container = createTranslationElement();
+    
+    // ローディングスピナーを追加
+    const loadingSpinner = document.createElement('div');
+    loadingSpinner.className = 'loading-spinner';
+    
     const content = document.createElement('div');
     content.style.marginTop = '10px';
-    content.textContent = message.translation;
+    content.textContent = '翻訳中...';
+    content.appendChild(loadingSpinner);
+    
     container.appendChild(content);
     document.body.appendChild(container);
+
+    // 翻訳結果が来たら更新
+    if (message.translation) {
+      content.textContent = message.translation;
+    }
   }
 });
 

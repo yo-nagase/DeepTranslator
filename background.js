@@ -80,9 +80,15 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     var selectedText = info.selectionText;
     if (!selectedText) return;
 
+    // まずローディング表示を送信
+    chrome.tabs.sendMessage(tab.id, {
+      action: "showTranslation",
+      translation: null
+    });
+
     translateText(selectedText)
       .then(function (translation) {
-        // content script に翻訳結果を送信
+        // 翻訳結果を送信
         chrome.tabs.sendMessage(tab.id, {
           action: "showTranslation",
           translation: translation
@@ -90,11 +96,9 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
       })
       .catch(function (err) {
         console.error(err);
-        chrome.notifications.create({
-          type: "basic",
-          iconUrl: "icon.png",
-          title: "翻訳エラー",
-          message: err.toString()
+        chrome.tabs.sendMessage(tab.id, {
+          action: "showTranslation",
+          translation: "エラーが発生しました: " + err.toString()
         });
       });
   }
