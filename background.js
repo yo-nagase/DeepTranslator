@@ -28,11 +28,11 @@ function translateText(text) {
   return getApiKey().then(function (apiKey) {
     return new Promise((resolve, reject) => {
       // 保存されたモデルを取得
-      chrome.storage.sync.get({ model: "gpt-4o-mini" }, function(data) {
+      chrome.storage.sync.get({ model: "gpt-4o-mini" }, function (data) {
         // 利用回数をカウントアップ
-        chrome.storage.sync.get({ usageCount: 0 }, function(data) {
-          chrome.storage.sync.set({ 
-            usageCount: data.usageCount + 1 
+        chrome.storage.sync.get({ usageCount: 0 }, function (data) {
+          chrome.storage.sync.set({
+            usageCount: data.usageCount + 1
           });
         });
 
@@ -156,7 +156,7 @@ chrome.runtime.onInstalled.addListener(function (details) {
 
   chrome.contextMenus.create({
     id: "translateText",
-    title: "ChatGPTで翻訳する",
+    title: "Deep Translatorで翻訳する",
     contexts: ["selection"]  // 選択したテキストがある場合にメニュー表示
   });
 });
@@ -177,7 +177,7 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     translateText(selectedText)
       .then(function (result) {
         // 履歴に保存
-        chrome.storage.local.get('translationHistory', function(data) {
+        chrome.storage.local.get('translationHistory', function (data) {
           const history = data.translationHistory || [];
           history.push({
             originalText: selectedText,
@@ -241,7 +241,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       translateText(message.text)
         .then(function (result) {
           // 履歴に保存
-          chrome.storage.local.get('translationHistory', function(data) {
+          chrome.storage.local.get('translationHistory', function (data) {
             const history = data.translationHistory || [];
             history.push({
               originalText: message.text,
