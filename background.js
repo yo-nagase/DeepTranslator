@@ -27,7 +27,9 @@ function getApiKey() {
 function translateText(text) {
   return getApiKey().then(function (apiKey) {
     return new Promise((resolve, reject) => {
-      const systemPrompt = `あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説を追加してください。
+      // 保存されたモデルを取得
+      chrome.storage.sync.get({ model: "gpt-4o-mini" }, function(data) {
+        const systemPrompt = `あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説を追加してください。
 解説は以下の項目を含めてHTML形式で返してください：
 
 [翻訳]
@@ -61,48 +63,49 @@ function translateText(text) {
 - 類似表現との違いやニュアンスの違いも説明
 - 慣用句の場合は、その由来や使用状況も説明`;
 
-      var endpoint = "https://api.openai.com/v1/chat/completions";
-      var payload = {
-        model: "gpt-4o-mini",
-        messages: [
-          {
-            role: "system",
-            content: systemPrompt
+        var endpoint = "https://api.openai.com/v1/chat/completions";
+        var payload = {
+          model: data.model,
+          messages: [
+            {
+              role: "system",
+              content: systemPrompt
+            },
+            {
+              role: "user",
+              content: `翻訳対象テキスト: ${text}\n\n以下の形式で返してください：\n[翻訳]\n{翻訳文}\n\n[解説]\n{解説文}`
+            }
+          ],
+          temperature: 0.3
+        };
+
+        fetch(endpoint, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer " + apiKey
           },
-          {
-            role: "user",
-            content: `翻訳対象テキスト: ${text}\n\n以下の形式で返してください：\n[翻訳]\n{翻訳文}\n\n[解説]\n{解説文}`
-          }
-        ],
-        temperature: 0.3
-      };
-
-      fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": "Bearer " + apiKey
-        },
-        body: JSON.stringify(payload)
-      })
-        .then(function (response) {
-          if (!response.ok) {
-            throw new Error("HTTPエラー: " + response.status);
-          }
-          return response.json();
+          body: JSON.stringify(payload)
         })
-        .then(function (data) {
-          const content = data.choices[0].message.content.trim();
-          const parts = content.split('[解説]');
-          const translation = parts[0].replace('[翻訳]', '').trim();
-          const explanation = parts[1] ? parts[1].trim() : '';
+          .then(function (response) {
+            if (!response.ok) {
+              throw new Error("HTTPエラー: " + response.status);
+            }
+            return response.json();
+          })
+          .then(function (data) {
+            const content = data.choices[0].message.content.trim();
+            const parts = content.split('[解説]');
+            const translation = parts[0].replace('[翻訳]', '').trim();
+            const explanation = parts[1] ? parts[1].trim() : '';
 
-          resolve({
-            translation: translation,
-            explanation: explanation
-          });
-        })
-        .catch(reject);
+            resolve({
+              translation: translation,
+              explanation: explanation
+            });
+          })
+          .catch(reject);
+      });
     });
   });
 }
@@ -237,7 +240,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.commands.onCommand.addListener((command) => {
   if (command === "translate-selection") {
     // アクティブなタブを取得して翻訳を実行
-    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+    chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
       chrome.tabs.sendMessage(tabs[0].id, {
         action: "shortcutPressed"
       });

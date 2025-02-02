@@ -76,9 +76,9 @@ function createTranslationElement(originalText) {
     height: 24px;
   `;
   speakButton.title = '原文を読み上げる';
-  
+
   globalSpeakButton = speakButton;
-  
+
   speakButton.onclick = () => {
     if (globalIsPlaying && globalAudio) {
       globalAudio.pause();
@@ -99,16 +99,16 @@ function createTranslationElement(originalText) {
         <path d="M10 8v8l6-4-6-4z"/>
       </svg>
     `;
-    chrome.runtime.sendMessage({ 
-      action: "speak", 
-      text: originalText 
+    chrome.runtime.sendMessage({
+      action: "speak",
+      text: originalText
     });
   };
 
   speakButton.onmouseover = () => {
     speakButton.style.opacity = '0.7';
   };
-  
+
   speakButton.onmouseout = () => {
     speakButton.style.opacity = '1';
   };
@@ -351,7 +351,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       }
 
       const elements = createTranslationElement(message.originalText);
-      
+
       if (!message.translation) {
         // ローディング表示
         elements.contentContainer.textContent = '翻訳中...';
@@ -366,16 +366,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           elements.explanationContainer.innerHTML = message.explanation;
         }
       }
-      
+
       document.body.appendChild(elements.container);
       break;
 
     case "shortcutPressed":
       const selectedText = window.getSelection().toString().trim();
       if (selectedText) {
-        chrome.runtime.sendMessage({ 
-          action: 'translate', 
-          text: selectedText 
+        chrome.runtime.sendMessage({
+          action: 'translate',
+          text: selectedText
         });
       }
       break;
@@ -386,14 +386,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         const arrayBuffer = new Uint8Array(message.audioData);
         const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
         const url = URL.createObjectURL(blob);
-        
+
         if (globalAudio) {
           globalAudio.pause();
           URL.revokeObjectURL(globalAudio.src);
         }
 
         globalAudio = new Audio(url);
-        
+
         globalAudio.onended = () => {
           globalIsPlaying = false;
           if (globalSpeakButton) {
@@ -419,7 +419,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           }
           globalIsPlaying = false;
         };
-        
+
         // 音声の読み込みを待ってから再生
         globalAudio.addEventListener('loadeddata', () => {
           globalAudio.play().then(() => {
@@ -472,14 +472,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 // ダブルクリックイベントのリスナーを設定
-chrome.storage.sync.get('enableDoubleClick', function(data) {
+chrome.storage.sync.get('enableDoubleClick', function (data) {
   if (data.enableDoubleClick) {
-    document.addEventListener('dblclick', function() {
+    document.addEventListener('dblclick', function () {
       const selectedText = window.getSelection().toString().trim();
       if (selectedText) {
-        chrome.runtime.sendMessage({ 
-          action: 'translate', 
-          text: selectedText 
+        chrome.runtime.sendMessage({
+          action: 'translate',
+          text: selectedText
         });
       }
     });

@@ -6,9 +6,10 @@ document.addEventListener("DOMContentLoaded", function () {
   var status = document.getElementById("status");
   var doubleClickCheckbox = document.getElementById("enableDoubleClick");
   var explanationCheckbox = document.getElementById("enableExplanation");
+  var modelSelect = document.getElementById("modelSelect");
 
   // 保存済みの設定を読み込む
-  chrome.storage.sync.get(["openaiApiKey", "enableDoubleClick", "enableExplanation"], function (data) {
+  chrome.storage.sync.get(["openaiApiKey", "enableDoubleClick", "enableExplanation", "model"], function (data) {
     if (data.openaiApiKey) {
       input.value = data.openaiApiKey;
     }
@@ -18,6 +19,11 @@ document.addEventListener("DOMContentLoaded", function () {
     if (data.enableExplanation !== undefined) {
       explanationCheckbox.checked = data.enableExplanation;
     }
+    if (data.model) {
+      modelSelect.value = data.model;
+    } else {
+      modelSelect.value = "gpt-4o-mini"; // デフォルト値
+    }
   });
 
   // フォーム送信時の処理
@@ -26,11 +32,13 @@ document.addEventListener("DOMContentLoaded", function () {
     var apiKey = input.value.trim();
     var enableDoubleClick = doubleClickCheckbox.checked;
     var enableExplanation = explanationCheckbox.checked;
-    
-    chrome.storage.sync.set({ 
+    var selectedModel = modelSelect.value;
+
+    chrome.storage.sync.set({
       openaiApiKey: apiKey,
       enableDoubleClick: enableDoubleClick,
-      enableExplanation: enableExplanation
+      enableExplanation: enableExplanation,
+      model: selectedModel
     }, function () {
       status.textContent = "保存しました。";
       setTimeout(function () {
