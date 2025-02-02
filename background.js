@@ -92,3 +92,27 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
       });
   }
 });
+
+// メッセージリスナーを追加
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.action === 'translate') {
+    translateText(request.text)
+      .then(function (translation) {
+        chrome.notifications.create({
+          type: "basic",
+          iconUrl: "icon.png",
+          title: "翻訳結果",
+          message: translation
+        });
+      })
+      .catch(function (err) {
+        console.error(err);
+        chrome.notifications.create({
+          type: "basic",
+          iconUrl: "icon.png",
+          title: "翻訳エラー",
+          message: err.toString()
+        });
+      });
+  }
+});
