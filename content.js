@@ -1,5 +1,10 @@
+// グローバル変数を先頭で宣言
+let globalSpeakButton = null;
+let globalAudio = null;
+let globalIsPlaying = false;
+
 // 翻訳結果を表示するための要素を作成する関数
-function createTranslationElement() {
+function createTranslationElement(originalText) {
   const container = document.createElement('div');
   container.id = 'chatgpt-translation-result';
   container.style.cssText = `
@@ -26,6 +31,7 @@ function createTranslationElement() {
     margin-bottom: 10px;
     padding-bottom: 8px;
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+    padding-right: 40px; // 閉じるボタン用のスペースを確保
   `;
 
   // アイコンの作成
@@ -43,7 +49,49 @@ function createTranslationElement() {
   title.style.cssText = `
     font-weight: bold;
     font-size: 16px;
+    flex-grow: 1;
   `;
+
+  // 読み上げボタンの作成
+  const speakButton = document.createElement('button');
+  speakButton.innerHTML = '🔊';
+  speakButton.style.cssText = `
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 20px;
+    padding: 0 10px;
+    color: var(--chatgpt-text-color, #666);
+    transition: opacity 0.2s;
+    margin-right: 10px;
+  `;
+  speakButton.title = '原文を読み上げる';
+  
+  globalSpeakButton = speakButton;
+  
+  speakButton.onclick = () => {
+    if (globalIsPlaying && globalAudio) {
+      globalAudio.pause();
+      globalAudio = null;
+      globalIsPlaying = false;
+      globalSpeakButton.innerHTML = '🔊';
+      return;
+    }
+
+    globalSpeakButton.innerHTML = '⏳';
+    chrome.runtime.sendMessage({ 
+      action: "speak", 
+      text: originalText 
+    });
+  };
+
+  speakButton.onmouseover = () => {
+    speakButton.style.opacity = '0.7';
+  };
+  
+  speakButton.onmouseout = () => {
+    speakButton.style.opacity = '1';
+  };
 
   // ローディングアニメーションのスタイル
   const style = document.createElement('style');
@@ -95,8 +143,9 @@ function createTranslationElement() {
   // 要素を組み立て
   header.appendChild(icon);
   header.appendChild(title);
+  header.appendChild(speakButton);
+  header.appendChild(closeButton);
   container.appendChild(header);
-  container.appendChild(closeButton);
 
   return container;
 }
@@ -116,34 +165,95 @@ darkModeMediaQuery.addListener((e) => {
   }
 });
 
-// メッセージリスナーを設定
+// メッセージリスナーを1つにまとめる
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "showTranslation") {
-    // 既存の翻訳結果があれば削除
-    const existingResult = document.getElementById('chatgpt-translation-result');
-    if (existingResult) {
-      existingResult.remove();
-    }
+  switch (message.action) {
+    case "showTranslation":
+      // 既存の翻訳結果があれば削除
+      const existingResult = document.getElementById('chatgpt-translation-result');
+      if (existingResult) {
+        existingResult.remove();
+      }
 
-    // 新しい翻訳結果を表示
-    const container = createTranslationElement();
-    
-    // ローディングスピナーを追加
-    const loadingSpinner = document.createElement('div');
-    loadingSpinner.className = 'loading-spinner';
-    
-    const content = document.createElement('div');
-    content.style.marginTop = '10px';
-    content.textContent = '翻訳中...';
-    content.appendChild(loadingSpinner);
-    
-    container.appendChild(content);
-    document.body.appendChild(container);
+      // 新しい翻訳結果を表示
+      const container = createTranslationElement(message.originalText);
+      
+      // ローディングスピナーを追加
+      const loadingSpinner = document.createElement('div');
+      loadingSpinner.className = 'loading-spinner';
+      
+      const content = document.createElement('div');
+      content.style.marginTop = '10px';
+      content.textContent = '翻訳中...';
+      content.appendChild(loadingSpinner);
+      
+      container.appendChild(content);
+      document.body.appendChild(container);
 
-    // 翻訳結果が来たら更新
-    if (message.translation) {
-      content.textContent = message.translation;
-    }
+      // 翻訳結果が来たら更新
+      if (message.translation) {
+        content.textContent = message.translation;
+      }
+      break;
+
+    case "playAudio":
+      try {
+        // 受け取った配列をUint8Arrayに戻す
+        const arrayBuffer = new Uint8Array(message.audioData);
+        const blob = new Blob([arrayBuffer], { type: 'audio/mp3' });
+        const url = URL.createObjectURL(blob);
+        
+        if (globalAudio) {
+          globalAudio.pause();
+          URL.revokeObjectURL(globalAudio.src);
+        }
+
+        globalAudio = new Audio(url);
+        
+        globalAudio.onended = () => {
+          globalIsPlaying = false;
+          if (globalSpeakButton) {
+            globalSpeakButton.innerHTML = '🔊';
+          }
+          URL.revokeObjectURL(url);
+        };
+
+        globalAudio.onerror = (e) => {
+          console.error('Audio playback error:', e);
+          if (globalSpeakButton) {
+            globalSpeakButton.innerHTML = '🔊';
+          }
+          globalIsPlaying = false;
+        };
+        
+        // 音声の読み込みを待ってから再生
+        globalAudio.addEventListener('loadeddata', () => {
+          globalAudio.play().then(() => {
+            globalIsPlaying = true;
+            if (globalSpeakButton) {
+              globalSpeakButton.innerHTML = '⏸️';
+            }
+          }).catch(error => {
+            console.error('Audio play error:', error);
+            if (globalSpeakButton) {
+              globalSpeakButton.innerHTML = '🔊';
+            }
+          });
+        });
+      } catch (error) {
+        console.error('Audio processing error:', error);
+        if (globalSpeakButton) {
+          globalSpeakButton.innerHTML = '🔊';
+        }
+      }
+      break;
+
+    case "ttsError":
+      console.error("TTS Error:", message.error);
+      if (globalSpeakButton) {
+        globalSpeakButton.innerHTML = '🔊';
+      }
+      break;
   }
 });
 

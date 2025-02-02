@@ -65,6 +65,35 @@ function translateText(text) {
   });
 }
 
+/**
+ * OpenAI TTS APIを使用してテキストを音声に変換する関数
+ * @param {string} text - 読み上げるテキスト
+ * @returns {Promise<ArrayBuffer>} - 音声データ
+ */
+async function textToSpeech(text) {
+  const apiKey = await getApiKey();
+  const endpoint = "https://api.openai.com/v1/audio/speech";
+  
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${apiKey}`
+    },
+    body: JSON.stringify({
+      model: "tts-1",
+      input: text,
+      voice: "alloy"
+    })
+  });
+
+  if (!response.ok) {
+    throw new Error(`音声生成エラー: ${response.status}`);
+  }
+
+  return await response.arrayBuffer();
+}
+
 // 拡張機能のインストール時にコンテキストメニューを作成
 chrome.runtime.onInstalled.addListener(function () {
   chrome.contextMenus.create({
@@ -83,7 +112,8 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
     // まずローディング表示を送信
     chrome.tabs.sendMessage(tab.id, {
       action: "showTranslation",
-      translation: null
+      translation: null,
+      originalText: selectedText
     });
 
     translateText(selectedText)
@@ -91,15 +121,39 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
         // 翻訳結果を送信
         chrome.tabs.sendMessage(tab.id, {
           action: "showTranslation",
-          translation: translation
+          translation: translation,
+          originalText: selectedText
         });
       })
       .catch(function (err) {
         console.error(err);
         chrome.tabs.sendMessage(tab.id, {
           action: "showTranslation",
-          translation: "エラーが発生しました: " + err.toString()
+          translation: "エラーが発生しました: " + err.toString(),
+          originalText: selectedText
         });
       });
+  }
+});
+
+// メッセージリスナーを修正
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === "speak") {
+    textToSpeech(message.text)
+      .then(audioData => {
+        // 音声データを直接Uint8Arrayとして送信
+        chrome.tabs.sendMessage(sender.tab.id, {
+          action: "playAudio",
+          audioData: Array.from(new Uint8Array(audioData)) // ArrayBufferを配列に変換
+        });
+      })
+      .catch(error => {
+        console.error("TTS error:", error);
+        chrome.tabs.sendMessage(sender.tab.id, {
+          action: "ttsError",
+          error: error.message
+        });
+      });
+    return true;
   }
 });

@@ -12,7 +12,8 @@
     "tabs"
   ],
   "host_permissions": [
-    "https://api.openai.com/"
+    "https://api.openai.com/v1/chat/completions",
+    "https://api.openai.com/v1/audio/speech"
   ],
   "background": {
     "service_worker": "background.js"
