@@ -12,7 +12,7 @@ function createTranslationElement(originalText) {
     top: 20px;
     right: 20px;
     max-width: 400px;
-    padding: 15px;
+    padding: 12px;
     background: var(--chatgpt-bg-color, #ffffff);
     color: var(--chatgpt-text-color, #000000);
     border: 1px solid rgba(128, 128, 128, 0.2);
@@ -28,19 +28,19 @@ function createTranslationElement(originalText) {
   header.style.cssText = `
     display: flex;
     align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
-    padding-right: 40px; // 閉じるボタン用のスペースを確保
+    padding-right: 40px;
   `;
 
   // アイコンの作成
   const icon = document.createElement('img');
   icon.src = chrome.runtime.getURL('icon.png');
   icon.style.cssText = `
-    width: 20px;
-    height: 20px;
-    margin-right: 8px;
+    width: 16px;
+    height: 16px;
+    margin-right: 6px;
   `;
 
   // タイトルの作成
@@ -48,22 +48,29 @@ function createTranslationElement(originalText) {
   title.textContent = '翻訳君';
   title.style.cssText = `
     font-weight: bold;
-    font-size: 16px;
+    font-size: 14px;
     flex-grow: 1;
   `;
 
   // 読み上げボタンの作成
   const speakButton = document.createElement('button');
-  speakButton.innerHTML = '🔊';
+  speakButton.innerHTML = `
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+    </svg>
+  `;
   speakButton.style.cssText = `
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 20px;
-    padding: 0 10px;
+    padding: 0 8px;
     color: var(--chatgpt-text-color, #666);
     transition: opacity 0.2s;
-    margin-right: 10px;
+    margin-right: 8px;
+    display: flex;
+    align-items: center;
+    height: 24px;
   `;
   speakButton.title = '原文を読み上げる';
   
@@ -74,11 +81,21 @@ function createTranslationElement(originalText) {
       globalAudio.pause();
       globalAudio = null;
       globalIsPlaying = false;
-      globalSpeakButton.innerHTML = '🔊';
+      globalSpeakButton.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      `;
       return;
     }
 
-    globalSpeakButton.innerHTML = '⏳';
+    globalSpeakButton.innerHTML = `
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="10"/>
+        <path d="M10 8v8l6-4-6-4z"/>
+      </svg>
+    `;
     chrome.runtime.sendMessage({ 
       action: "speak", 
       text: originalText 
@@ -121,14 +138,14 @@ function createTranslationElement(originalText) {
   closeButton.textContent = '×';
   closeButton.style.cssText = `
     position: absolute;
-    top: 12px;
-    right: 12px;
+    top: 8px;
+    right: 8px;
     border: none;
     background: none;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--chatgpt-text-color, #666);
-    padding: 5px;
+    padding: 4px;
     line-height: 1;
   `;
   closeButton.onclick = () => container.remove();
@@ -213,7 +230,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         globalAudio.onended = () => {
           globalIsPlaying = false;
           if (globalSpeakButton) {
-            globalSpeakButton.innerHTML = '🔊';
+            globalSpeakButton.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+            `;
           }
           URL.revokeObjectURL(url);
         };
@@ -221,7 +243,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         globalAudio.onerror = (e) => {
           console.error('Audio playback error:', e);
           if (globalSpeakButton) {
-            globalSpeakButton.innerHTML = '🔊';
+            globalSpeakButton.innerHTML = `
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+              </svg>
+            `;
           }
           globalIsPlaying = false;
         };
@@ -231,19 +258,34 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
           globalAudio.play().then(() => {
             globalIsPlaying = true;
             if (globalSpeakButton) {
-              globalSpeakButton.innerHTML = '⏸️';
+              globalSpeakButton.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect x="6" y="4" width="4" height="16"/>
+                  <rect x="14" y="4" width="4" height="16"/>
+                </svg>
+              `;
             }
           }).catch(error => {
             console.error('Audio play error:', error);
             if (globalSpeakButton) {
-              globalSpeakButton.innerHTML = '🔊';
+              globalSpeakButton.innerHTML = `
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+                </svg>
+              `;
             }
           });
         });
       } catch (error) {
         console.error('Audio processing error:', error);
         if (globalSpeakButton) {
-          globalSpeakButton.innerHTML = '🔊';
+          globalSpeakButton.innerHTML = `
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+              <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+            </svg>
+          `;
         }
       }
       break;
@@ -251,7 +293,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     case "ttsError":
       console.error("TTS Error:", message.error);
       if (globalSpeakButton) {
-        globalSpeakButton.innerHTML = '🔊';
+        globalSpeakButton.innerHTML = `
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M11 5L6 9H2v6h4l5 4V5z"/>
+            <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"/>
+          </svg>
+        `;
       }
       break;
   }
