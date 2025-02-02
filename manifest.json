@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT 翻訳プラグイン",
+  "version": "1.0",
+  "description": "選択したテキストを ChatGPT API に投げて翻訳結果を通知で表示します。",
+  "permissions": [
+    "contextMenus",
+    "activeTab",
+    "scripting",
+    "notifications"
+  ],
+  "host_permissions": [
+    "https://api.openai.com/"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "icons": {
+    "16": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  }
+}
