@@ -139,6 +139,7 @@ function createTranslationElement(originalText) {
   // 閉じるボタン
   const closeButton = document.createElement('button');
   closeButton.textContent = '×';
+  closeButton.title = '閉じる';
   closeButton.style.cssText = `
     position: absolute;
     top: 8px;
@@ -317,6 +318,30 @@ function createTranslationElement(originalText) {
       解説を表示
     `;
   };
+
+  // ツールチップの表示時間を短くするためのスタイルを追加
+  const tooltipStyle = document.createElement('style');
+  tooltipStyle.textContent = `
+    [title] {
+      position: relative;
+    }
+    [title]:hover::before {
+      content: attr(title);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 4px 8px;
+      background: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 12px;
+      border-radius: 4px;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: opacity 0.1s;
+    }
+  `;
+  document.head.appendChild(tooltipStyle);
 
   return {
     container,
