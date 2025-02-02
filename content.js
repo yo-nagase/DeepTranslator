@@ -12,7 +12,7 @@ function createTranslationElement(originalText) {
     top: 20px;
     right: 20px;
     max-width: 400px;
-    padding: 12px;
+    max-height: calc(100vh - 40px);
     background: var(--chatgpt-bg-color, #ffffff);
     color: var(--chatgpt-text-color, #000000);
     border: 1px solid rgba(128, 128, 128, 0.2);
@@ -21,6 +21,8 @@ function createTranslationElement(originalText) {
     z-index: 10000;
     font-size: 14px;
     line-height: 1.5;
+    display: flex;
+    flex-direction: column;
   `;
 
   // ヘッダー部分の作成
@@ -28,18 +30,19 @@ function createTranslationElement(originalText) {
   header.style.cssText = `
     display: flex;
     align-items: center;
-    margin-bottom: 8px;
-    padding-bottom: 6px;
+    margin: 0;
+    padding: 8px 12px;
     border-bottom: 1px solid rgba(128, 128, 128, 0.2);
     padding-right: 40px;
+    flex-shrink: 0;
   `;
 
   // アイコンの作成
   const icon = document.createElement('img');
   icon.src = chrome.runtime.getURL('icon.png');
   icon.style.cssText = `
-    width: 16px;
-    height: 16px;
+    width: 14px;
+    height: 14px;
     margin-right: 6px;
   `;
 
@@ -48,7 +51,7 @@ function createTranslationElement(originalText) {
   title.textContent = '翻訳君';
   title.style.cssText = `
     font-weight: bold;
-    font-size: 14px;
+    font-size: 13px;
     flex-grow: 1;
   `;
 
@@ -157,17 +160,59 @@ function createTranslationElement(originalText) {
     container.classList.add('dark-mode');
   }
 
+  // スクロール可能なコンテンツ領域を作成
+  const scrollableContent = document.createElement('div');
+  scrollableContent.style.cssText = `
+    padding: 12px;
+    overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(128, 128, 128, 0.3) transparent;
+  `;
+
+  // スクロールバーのスタイルを追加
+  const scrollbarStyle = document.createElement('style');
+  scrollbarStyle.textContent = `
+    #chatgpt-translation-result > div:last-child::-webkit-scrollbar {
+      width: 8px;
+    }
+    
+    #chatgpt-translation-result > div:last-child::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    
+    #chatgpt-translation-result > div:last-child::-webkit-scrollbar-thumb {
+      background-color: rgba(128, 128, 128, 0.3);
+      border-radius: 4px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    
+    #chatgpt-translation-result > div:last-child::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(128, 128, 128, 0.5);
+    }
+    
+    .dark-mode#chatgpt-translation-result > div:last-child::-webkit-scrollbar-thumb {
+      background-color: rgba(255, 255, 255, 0.3);
+    }
+    
+    .dark-mode#chatgpt-translation-result > div:last-child::-webkit-scrollbar-thumb:hover {
+      background-color: rgba(255, 255, 255, 0.5);
+    }
+  `;
+  document.head.appendChild(scrollbarStyle);
+
   // 要素を組み立て
   header.appendChild(icon);
   header.appendChild(title);
   header.appendChild(speakButton);
   header.appendChild(closeButton);
   container.appendChild(header);
+  container.appendChild(scrollableContent);
 
   // 翻訳結果コンテナ
   const contentContainer = document.createElement('div');
   contentContainer.style.marginTop = '10px';
-  container.appendChild(contentContainer);
+  scrollableContent.appendChild(contentContainer);
 
   // 解説ボタンの作成
   const explanationButton = document.createElement('button');
@@ -247,8 +292,9 @@ function createTranslationElement(originalText) {
   `;
   document.head.appendChild(explanationStyle);
 
-  container.appendChild(explanationButton);
-  container.appendChild(explanationContainer);
+  scrollableContent.appendChild(contentContainer);
+  scrollableContent.appendChild(explanationButton);
+  scrollableContent.appendChild(explanationContainer);
 
   let isExplanationVisible = false;
   explanationButton.onclick = () => {
