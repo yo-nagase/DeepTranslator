@@ -228,6 +228,10 @@ function createTranslationElement(originalText) {
     cursor: pointer;
     font-size: 13px;
     transition: all 0.2s;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   `;
   explanationButton.innerHTML = `
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
