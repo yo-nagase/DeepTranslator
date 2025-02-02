@@ -48,7 +48,7 @@ function createTranslationElement(originalText) {
 
   // タイトルの作成
   const title = document.createElement('span');
-  title.textContent = '翻訳君';
+  title.textContent = 'Deep Translator';
   title.style.cssText = `
     font-weight: bold;
     font-size: 13px;

@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT 翻訳プラグイン",
+  "name": "Deep Translator",
   "version": "1.0",
-  "description": "選択したテキストを ChatGPT API に投げて翻訳結果を通知で表示します。",
+  "description": "ChatGPT APIを使用した高精度な翻訳と詳細な解説を提供する翻訳ツール",
   "permissions": [
     "contextMenus",
     "activeTab",
