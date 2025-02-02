@@ -9,7 +9,12 @@ document.addEventListener("DOMContentLoaded", function () {
   var modelSelect = document.getElementById("modelSelect");
 
   // 保存済みの設定を読み込む
-  chrome.storage.sync.get(["openaiApiKey", "enableDoubleClick", "enableExplanation", "model"], function (data) {
+  chrome.storage.sync.get([
+    "openaiApiKey", 
+    "enableDoubleClick", 
+    "showOriginalText",
+    "model"
+  ], function (data) {
     if (data.openaiApiKey) {
       input.value = data.openaiApiKey;
     }
@@ -22,6 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       modelSelect.value = "gpt-4o-mini"; // デフォルト値
     }
+    // デフォルトはtrue
+    const showOriginalCheckbox = document.getElementById('showOriginalText');
+    showOriginalCheckbox.checked = data.showOriginalText !== false;
   });
 
   // フォーム送信時の処理
@@ -29,6 +37,7 @@ document.addEventListener("DOMContentLoaded", function () {
     e.preventDefault();
     var apiKey = input.value.trim();
     var enableDoubleClick = doubleClickCheckbox.checked;
+    var showOriginalText = document.getElementById('showOriginalText').checked;
     var selectedModel = modelSelect.value;
 
     // APIキーのバリデーション
@@ -41,6 +50,7 @@ document.addEventListener("DOMContentLoaded", function () {
     chrome.storage.sync.set({
       openaiApiKey: apiKey,
       enableDoubleClick: enableDoubleClick,
+      showOriginalText: showOriginalText,
       model: selectedModel
     }, function () {
       if (chrome.runtime.lastError) {

@@ -397,8 +397,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         loadingSpinner.className = 'loading-spinner';
         elements.contentContainer.appendChild(loadingSpinner);
       } else {
-        // 翻訳結果と解説を表示
-        elements.contentContainer.textContent = message.translation;
+        // 設定を確認して原文を表示するかどうかを決定
+        chrome.storage.sync.get({ showOriginalText: true }, function(data) {
+          if (data.showOriginalText) {
+            const originalTextDiv = document.createElement('div');
+            originalTextDiv.style.cssText = `
+              margin-bottom: 12px;
+              padding-bottom: 12px;
+              border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+              color: var(--chatgpt-text-color, #666);
+              font-style: italic;
+            `;
+            originalTextDiv.textContent = message.originalText;
+            elements.contentContainer.appendChild(originalTextDiv);
+          }
+
+          const translationDiv = document.createElement('div');
+          translationDiv.textContent = message.translation;
+          elements.contentContainer.appendChild(translationDiv);
+        });
+
         if (message.explanation) {
           elements.explanationButton.style.display = 'block';
           elements.explanationContainer.innerHTML = message.explanation;
