@@ -29,6 +29,13 @@ function translateText(text) {
     return new Promise((resolve, reject) => {
       // 保存されたモデルを取得
       chrome.storage.sync.get({ model: "gpt-4o-mini" }, function(data) {
+        // 利用回数をカウントアップ
+        chrome.storage.sync.get({ usageCount: 0 }, function(data) {
+          chrome.storage.sync.set({ 
+            usageCount: data.usageCount + 1 
+          });
+        });
+
         const systemPrompt = `あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説を追加してください。
 解説は以下の項目を含めてHTML形式で返してください：
 

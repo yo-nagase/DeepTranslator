@@ -9,13 +9,16 @@ document.addEventListener("DOMContentLoaded", function () {
   var modelSelect = document.getElementById("modelSelect");
 
   // 保存済みの設定を読み込む
-  chrome.storage.sync.get(["openaiApiKey", "enableDoubleClick", "enableExplanation", "model"], function (data) {
+  chrome.storage.sync.get([
+    "openaiApiKey", 
+    "enableDoubleClick", 
+    "showOriginalText",
+    "model"
+  ], function (data) {
     if (data.openaiApiKey) {
       input.value = data.openaiApiKey;
     }
-    if (data.enableDoubleClick !== undefined) {
-      doubleClickCheckbox.checked = data.enableDoubleClick;
-    }
+    doubleClickCheckbox.checked = !!data.enableDoubleClick; // デフォルトはfalse
     if (data.enableExplanation !== undefined) {
       explanationCheckbox.checked = data.enableExplanation;
     }
@@ -24,6 +27,9 @@ document.addEventListener("DOMContentLoaded", function () {
     } else {
       modelSelect.value = "gpt-4o-mini"; // デフォルト値
     }
+    // デフォルトはtrue
+    const showOriginalCheckbox = document.getElementById('showOriginalText');
+    showOriginalCheckbox.checked = data.showOriginalText !== false;
   });
 
   // フォーム送信時の処理
@@ -31,16 +37,29 @@ document.addEventListener("DOMContentLoaded", function () {
     e.preventDefault();
     var apiKey = input.value.trim();
     var enableDoubleClick = doubleClickCheckbox.checked;
-    var enableExplanation = explanationCheckbox.checked;
+    var showOriginalText = document.getElementById('showOriginalText').checked;
     var selectedModel = modelSelect.value;
+
+    // APIキーのバリデーション
+    if (!apiKey) {
+      status.textContent = "APIキーを入力してください";
+      status.style.color = "#f44336";
+      return;
+    }
 
     chrome.storage.sync.set({
       openaiApiKey: apiKey,
       enableDoubleClick: enableDoubleClick,
-      enableExplanation: enableExplanation,
+      showOriginalText: showOriginalText,
       model: selectedModel
     }, function () {
+      if (chrome.runtime.lastError) {
+        status.textContent = "エラー: " + chrome.runtime.lastError.message;
+        status.style.color = "#f44336";
+        return;
+      }
       status.textContent = "保存しました。";
+      status.style.color = "#4CAF50";
       setTimeout(function () {
         status.textContent = "";
       }, 2000);

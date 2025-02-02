@@ -25,6 +25,19 @@ function createTranslationElement(originalText) {
     flex-direction: column;
   `;
 
+  // ウィンドウ外クリックで閉じる機能を追加
+  function handleClickOutside(event) {
+    if (!container.contains(event.target)) {
+      container.remove();
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }
+
+  // 少し遅延を入れてイベントリスナーを追加（即時追加すると開いた瞬間に閉じる可能性がある）
+  setTimeout(() => {
+    document.addEventListener('mousedown', handleClickOutside);
+  }, 3000);
+
   // ヘッダー部分の作成
   const header = document.createElement('div');
   header.style.cssText = `
@@ -47,13 +60,44 @@ function createTranslationElement(originalText) {
   `;
 
   // タイトルの作成
+  const titleContainer = document.createElement('div');
+  titleContainer.style.cssText = `
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+  `;
+
   const title = document.createElement('span');
   title.textContent = 'Deep Translator';
   title.style.cssText = `
     font-weight: bold;
     font-size: 13px;
-    flex-grow: 1;
   `;
+
+  const usageCount = document.createElement('span');
+  usageCount.style.cssText = `
+    font-size: 10px;
+    color: var(--chatgpt-text-color, #666);
+    margin-left: 8px;
+    margin-top: 2px;
+    background: rgba(128, 128, 128, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+  `;
+
+  // 利用回数を取得して表示
+  chrome.storage.sync.get({ usageCount: 0 }, function(data) {
+    usageCount.textContent = data.usageCount;
+  });
+
+  titleContainer.appendChild(title);
+  titleContainer.appendChild(usageCount);
 
   // 読み上げボタンの作成
   const speakButton = document.createElement('button');
@@ -204,7 +248,7 @@ function createTranslationElement(originalText) {
 
   // 要素を組み立て
   header.appendChild(icon);
-  header.appendChild(title);
+  header.appendChild(titleContainer);
   header.appendChild(speakButton);
   header.appendChild(closeButton);
   container.appendChild(header);
@@ -384,8 +428,26 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         loadingSpinner.className = 'loading-spinner';
         elements.contentContainer.appendChild(loadingSpinner);
       } else {
-        // 翻訳結果と解説を表示
-        elements.contentContainer.textContent = message.translation;
+        // 設定を確認して原文を表示するかどうかを決定
+        chrome.storage.sync.get({ showOriginalText: true }, function(data) {
+          if (data.showOriginalText) {
+            const originalTextDiv = document.createElement('div');
+            originalTextDiv.style.cssText = `
+              margin-bottom: 12px;
+              padding-bottom: 12px;
+              border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+              color: var(--chatgpt-text-color, #666);
+              font-style: italic;
+            `;
+            originalTextDiv.textContent = message.originalText;
+            elements.contentContainer.appendChild(originalTextDiv);
+          }
+
+          const translationDiv = document.createElement('div');
+          translationDiv.textContent = message.translation;
+          elements.contentContainer.appendChild(translationDiv);
+        });
+
         if (message.explanation) {
           elements.explanationButton.style.display = 'block';
           elements.explanationContainer.innerHTML = message.explanation;
