@@ -60,13 +60,44 @@ function createTranslationElement(originalText) {
   `;
 
   // タイトルの作成
+  const titleContainer = document.createElement('div');
+  titleContainer.style.cssText = `
+    display: flex;
+    align-items: center;
+    flex-grow: 1;
+  `;
+
   const title = document.createElement('span');
   title.textContent = 'Deep Translator';
   title.style.cssText = `
     font-weight: bold;
     font-size: 13px;
-    flex-grow: 1;
   `;
+
+  const usageCount = document.createElement('span');
+  usageCount.style.cssText = `
+    font-size: 10px;
+    color: var(--chatgpt-text-color, #666);
+    margin-left: 8px;
+    margin-top: 2px;
+    background: rgba(128, 128, 128, 0.1);
+    padding: 2px 6px;
+    border-radius: 10px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 16px;
+    height: 16px;
+  `;
+
+  // 利用回数を取得して表示
+  chrome.storage.sync.get({ usageCount: 0 }, function(data) {
+    usageCount.textContent = data.usageCount;
+  });
+
+  titleContainer.appendChild(title);
+  titleContainer.appendChild(usageCount);
 
   // 読み上げボタンの作成
   const speakButton = document.createElement('button');
@@ -217,7 +248,7 @@ function createTranslationElement(originalText) {
 
   // 要素を組み立て
   header.appendChild(icon);
-  header.appendChild(title);
+  header.appendChild(titleContainer);
   header.appendChild(speakButton);
   header.appendChild(closeButton);
   container.appendChild(header);
