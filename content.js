@@ -262,7 +262,9 @@ function createTranslationElement(originalText) {
   // 解説ボタンの作成
   const explanationButton = document.createElement('button');
   explanationButton.style.cssText = `
-    display: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     width: 100%;
     padding: 8px;
     margin-top: 12px;
@@ -274,17 +276,19 @@ function createTranslationElement(originalText) {
     font-size: 13px;
     transition: all 0.2s;
     white-space: nowrap;
-    display: flex;
-    align-items: center;
-    justify-content: center;
   `;
+
+  // ボタンの内容をspanで包む
   explanationButton.innerHTML = `
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
-      <line x1="12" y1="5" x2="12" y2="19"></line>
-      <line x1="5" y1="12" x2="19" y2="12"></line>
-    </svg>
-    解説を表示
+    <span style="display: flex; align-items: center; gap: 6px;">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      <span>解説を表示</span>
+    </span>
   `;
+
   explanationButton.onmouseover = () => {
     explanationButton.style.backgroundColor = 'rgba(128, 128, 128, 0.1)';
   };
@@ -350,16 +354,20 @@ function createTranslationElement(originalText) {
     isExplanationVisible = !isExplanationVisible;
     explanationContainer.style.display = isExplanationVisible ? 'block' : 'none';
     explanationButton.innerHTML = isExplanationVisible ? `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      解説を隠す
+      <span style="display: flex; align-items: center; gap: 6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>解説を隠す</span>
+      </span>
     ` : `
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
-        <line x1="12" y1="5" x2="12" y2="19"></line>
-        <line x1="5" y1="12" x2="19" y2="12"></line>
-      </svg>
-      解説を表示
+      <span style="display: flex; align-items: center; gap: 6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <line x1="12" y1="5" x2="12" y2="19"></line>
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+        </svg>
+        <span>解説を表示</span>
+      </span>
     `;
   };
 
