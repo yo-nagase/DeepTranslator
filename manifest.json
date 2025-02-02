@@ -7,7 +7,8 @@
     "contextMenus",
     "activeTab",
     "scripting",
-    "notifications"
+    "notifications",
+    "storage"
   ],
   "host_permissions": [
     "https://api.openai.com/"
@@ -15,6 +16,7 @@
   "background": {
     "service_worker": "background.js"
   },
+  "options_page": "options.html",
   "icons": {
     "16": "icon.png",
     "48": "icon.png",

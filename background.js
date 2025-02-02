@@ -1,8 +1,63 @@
-// ※ OpenAI の API キーを以下にセットしてください
-const OPENAI_API_KEY = "YOUR_API_KEY_HERE";
+// background.js
 
-// 拡張機能インストール時にコンテキストメニューを作成
-chrome.runtime.onInstalled.addListener(() => {
+/**
+ * chrome.storage.sync から保存された API キーを取得する関数
+ * @returns {Promise<string>}
+ */
+function getApiKey() {
+  return new Promise(function (resolve, reject) {
+    chrome.storage.sync.get("openaiApiKey", function (data) {
+      if (chrome.runtime.lastError) {
+        return reject(chrome.runtime.lastError);
+      }
+      var apiKey = data.openaiApiKey;
+      if (!apiKey) {
+        return reject(new Error("API キーが設定されていません。オプションページから設定してください。"));
+      }
+      resolve(apiKey);
+    });
+  });
+}
+
+/**
+ * 選択テキストを ChatGPT API に送信して翻訳を依頼する関数
+ * @param {string} text - 翻訳したいテキスト
+ * @returns {Promise<string>} - 翻訳結果の文字列
+ */
+function translateText(text) {
+  return getApiKey().then(function (apiKey) {
+    var endpoint = "https://api.openai.com/v1/chat/completions";
+    var payload = {
+      model: "gpt-3.5-turbo",
+      messages: [
+        { role: "system", content: "あなたはプロの翻訳者です。以下のテキストを翻訳してください。" },
+        { role: "user", content: text }
+      ],
+      temperature: 0.3
+    };
+
+    return fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer " + apiKey
+      },
+      body: JSON.stringify(payload)
+    })
+      .then(function (response) {
+        if (!response.ok) {
+          throw new Error("HTTPエラー: " + response.status);
+        }
+        return response.json();
+      })
+      .then(function (data) {
+        return data.choices[0].message.content.trim();
+      });
+  });
+}
+
+// 拡張機能のインストール時にコンテキストメニューを作成
+chrome.runtime.onInstalled.addListener(function () {
   chrome.contextMenus.create({
     id: "translateText",
     title: "ChatGPTで翻訳する",
@@ -11,23 +66,22 @@ chrome.runtime.onInstalled.addListener(() => {
 });
 
 // コンテキストメニューがクリックされたときの処理
-chrome.contextMenus.onClicked.addListener((info, tab) => {
+chrome.contextMenus.onClicked.addListener(function (info, tab) {
   if (info.menuItemId === "translateText") {
-    const selectedText = info.selectionText;
+    var selectedText = info.selectionText;
     if (!selectedText) return;
 
-    // ChatGPT API にテキストを投げて翻訳結果を取得
     translateText(selectedText)
-      .then(translation => {
+      .then(function (translation) {
         // 翻訳結果を通知で表示
         chrome.notifications.create({
           type: "basic",
-          iconUrl: "icon.png", // 事前に用意したアイコンファイル
+          iconUrl: "icon.png", // 用意したアイコンファイル
           title: "翻訳結果",
           message: translation
         });
       })
-      .catch(err => {
+      .catch(function (err) {
         console.error(err);
         chrome.notifications.create({
           type: "basic",
@@ -38,39 +92,3 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       });
   }
 });
-
-/**
- * 選択テキストを ChatGPT API に送信して翻訳を依頼する関数
- * @param {string} text - 翻訳したいテキスト
- * @returns {Promise<string>} - 翻訳結果の文字列
- */
-async function translateText(text) {
-  const endpoint = "https://api.openai.com/v1/chat/completions";
-
-  // API に送信するペイロード。ここではシンプルに「翻訳してください」と依頼しています。
-  const payload = {
-    model: "gpt-3.5-turbo",
-    messages: [
-      { role: "system", content: "あなたはプロの翻訳者です。以下のテキストを翻訳してください。" },
-      { role: "user", content: text }
-    ],
-    temperature: 0.3
-  };
-
-  const response = await fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${OPENAI_API_KEY}`
-    },
-    body: JSON.stringify(payload)
-  });
-
-  if (!response.ok) {
-    throw new Error(`HTTPエラー: ${response.status}`);
-  }
-
-  const data = await response.json();
-  // API のレスポンスから翻訳結果を取り出す
-  return data.choices[0].message.content.trim();
-}
