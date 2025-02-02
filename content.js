@@ -164,7 +164,116 @@ function createTranslationElement(originalText) {
   header.appendChild(closeButton);
   container.appendChild(header);
 
-  return container;
+  // 翻訳結果コンテナ
+  const contentContainer = document.createElement('div');
+  contentContainer.style.marginTop = '10px';
+  container.appendChild(contentContainer);
+
+  // 解説ボタンの作成
+  const explanationButton = document.createElement('button');
+  explanationButton.style.cssText = `
+    display: none;
+    width: 100%;
+    padding: 8px;
+    margin-top: 12px;
+    background: none;
+    border: 1px solid var(--chatgpt-text-color, #666);
+    border-radius: 4px;
+    color: var(--chatgpt-text-color, #666);
+    cursor: pointer;
+    font-size: 13px;
+    transition: all 0.2s;
+  `;
+  explanationButton.innerHTML = `
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
+      <line x1="12" y1="5" x2="12" y2="19"></line>
+      <line x1="5" y1="12" x2="19" y2="12"></line>
+    </svg>
+    解説を表示
+  `;
+  explanationButton.onmouseover = () => {
+    explanationButton.style.backgroundColor = 'rgba(128, 128, 128, 0.1)';
+  };
+  explanationButton.onmouseout = () => {
+    explanationButton.style.backgroundColor = 'transparent';
+  };
+
+  // 解説コンテナ
+  const explanationContainer = document.createElement('div');
+  explanationContainer.style.cssText = `
+    display: none;
+    margin-top: 12px;
+    padding-top: 12px;
+    border-top: 1px solid rgba(128, 128, 128, 0.2);
+    font-size: 13px;
+    color: var(--chatgpt-text-color, #666);
+  `;
+
+  // 解説用のスタイルを追加
+  const explanationStyle = document.createElement('style');
+  explanationStyle.textContent = `
+    .explanation h3 {
+      font-size: 14px;
+      font-weight: bold;
+      margin: 12px 0 8px;
+      color: var(--chatgpt-text-color, #444);
+    }
+    
+    .explanation h3:first-child {
+      margin-top: 0;
+    }
+    
+    .explanation ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    
+    .explanation li {
+      margin: 4px 0;
+      line-height: 1.5;
+    }
+    
+    .explanation li strong {
+      color: var(--chatgpt-text-color, #444);
+    }
+    
+    .dark-mode .explanation h3 {
+      color: var(--chatgpt-text-color, #ccc);
+    }
+    
+    .dark-mode .explanation li strong {
+      color: var(--chatgpt-text-color, #ddd);
+    }
+  `;
+  document.head.appendChild(explanationStyle);
+
+  container.appendChild(explanationButton);
+  container.appendChild(explanationContainer);
+
+  let isExplanationVisible = false;
+  explanationButton.onclick = () => {
+    isExplanationVisible = !isExplanationVisible;
+    explanationContainer.style.display = isExplanationVisible ? 'block' : 'none';
+    explanationButton.innerHTML = isExplanationVisible ? `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      解説を隠す
+    ` : `
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 6px; vertical-align: -2px;">
+        <line x1="12" y1="5" x2="12" y2="19"></line>
+        <line x1="5" y1="12" x2="19" y2="12"></line>
+      </svg>
+      解説を表示
+    `;
+  };
+
+  return {
+    container,
+    contentContainer,
+    explanationButton,
+    explanationContainer
+  };
 }
 
 // ダークモードの変更を監視
@@ -186,31 +295,29 @@ darkModeMediaQuery.addListener((e) => {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   switch (message.action) {
     case "showTranslation":
-      // 既存の翻訳結果があれば削除
       const existingResult = document.getElementById('chatgpt-translation-result');
       if (existingResult) {
         existingResult.remove();
       }
 
-      // 新しい翻訳結果を表示
-      const container = createTranslationElement(message.originalText);
+      const elements = createTranslationElement(message.originalText);
       
-      // ローディングスピナーを追加
-      const loadingSpinner = document.createElement('div');
-      loadingSpinner.className = 'loading-spinner';
-      
-      const content = document.createElement('div');
-      content.style.marginTop = '10px';
-      content.textContent = '翻訳中...';
-      content.appendChild(loadingSpinner);
-      
-      container.appendChild(content);
-      document.body.appendChild(container);
-
-      // 翻訳結果が来たら更新
-      if (message.translation) {
-        content.textContent = message.translation;
+      if (!message.translation) {
+        // ローディング表示
+        elements.contentContainer.textContent = '翻訳中...';
+        const loadingSpinner = document.createElement('div');
+        loadingSpinner.className = 'loading-spinner';
+        elements.contentContainer.appendChild(loadingSpinner);
+      } else {
+        // 翻訳結果と解説を表示
+        elements.contentContainer.textContent = message.translation;
+        if (message.explanation) {
+          elements.explanationButton.style.display = 'block';
+          elements.explanationContainer.innerHTML = message.explanation;
+        }
       }
+      
+      document.body.appendChild(elements.container);
       break;
 
     case "playAudio":
