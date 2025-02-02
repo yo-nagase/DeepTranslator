@@ -65,4 +65,27 @@ document.addEventListener("DOMContentLoaded", function () {
       }, 2000);
     });
   });
+
+  // 利用統計の表示
+  const statsContainer = document.createElement('div');
+  statsContainer.className = 'stats-container';
+  
+  chrome.storage.local.get(['usageCount'], function(result) {
+    const count = result.usageCount || 0;
+    statsContainer.innerHTML = `
+      <h3>利用統計</h3>
+      <p>総利用回数: ${count}</p>
+      <button id="resetStats">統計をリセット</button>
+    `;
+    // リセットボタンの処理
+    document.getElementById('resetStats').onclick = function() {
+      if (confirm('利用統計をリセットしますか？')) {
+        chrome.storage.local.set({ usageCount: 0 }, function() {
+          location.reload();
+        });
+      }
+    };
+  });
+
+  document.body.appendChild(statsContainer);
 });

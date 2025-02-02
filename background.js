@@ -20,22 +20,31 @@ function getApiKey() {
 }
 
 /**
+ * 利用回数を保存・取得する関数
+ * @returns {Promise<number>}
+ */
+function incrementUsageCount() {
+  return new Promise((resolve) => {
+    chrome.storage.local.get(['usageCount'], function(result) {
+      const newCount = (result.usageCount || 0) + 1;
+      chrome.storage.local.set({ usageCount: newCount }, () => {
+        resolve(newCount);
+      });
+    });
+  });
+}
+
+/**
  * 選択テキストを ChatGPT API に送信して翻訳を依頼する関数
  * @param {string} text - 翻訳したいテキスト
  * @returns {Promise<{translation: string, explanation: string}>} - 翻訳結果と解説
  */
-function translateText(text) {
+async function translateText(text) {
+  const count = await incrementUsageCount();
   return getApiKey().then(function (apiKey) {
     return new Promise((resolve, reject) => {
       // 保存されたモデルを取得
       chrome.storage.sync.get({ model: "gpt-4o-mini" }, function (data) {
-        // 利用回数をカウントアップ
-        chrome.storage.sync.get({ usageCount: 0 }, function (data) {
-          chrome.storage.sync.set({
-            usageCount: data.usageCount + 1
-          });
-        });
-
         const systemPrompt = `あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説を追加してください。
 解説は以下の項目を含めてHTML形式で返してください：
 
