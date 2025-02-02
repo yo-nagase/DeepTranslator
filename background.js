@@ -29,8 +29,8 @@ function translateText(text) {
     return new Promise((resolve, reject) => {
       chrome.storage.sync.get("enableExplanation", function (data) {
         var systemPrompt = data.enableExplanation
-          ? "あなたはプロの翻訳者です。以下のテキストを翻訳してください。"
-          : "あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説（言い回しの違いや文化的な違いなど）を追加してください。解説は「【解説】」という見出しの後に記述してください。"
+          ? "あなたはプロの翻訳者です。以下のテキストを翻訳し、その後に翻訳の解説（言い回しの違いや文化的な違いなど）を追加してください。解説は「【解説】」という見出しの後に記述してください。"
+          : "あなたはプロの翻訳者です。以下のテキストを翻訳してください。"
 
         var endpoint = "https://api.openai.com/v1/chat/completions";
         var payload = {

@@ -18,18 +18,40 @@ function createTranslationElement() {
     line-height: 1.5;
   `;
 
-  // ダークモード検出とカラー設定
-  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-    container.style.setProperty('--chatgpt-bg-color', '#2d2d2d');
-    container.style.setProperty('--chatgpt-text-color', '#ffffff');
-  }
+  // ヘッダー部分の作成
+  const header = document.createElement('div');
+  header.style.cssText = `
+    display: flex;
+    align-items: center;
+    margin-bottom: 10px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(128, 128, 128, 0.2);
+  `;
 
+  // アイコンの作成
+  const icon = document.createElement('img');
+  icon.src = chrome.runtime.getURL('icon.png');
+  icon.style.cssText = `
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+  `;
+
+  // タイトルの作成
+  const title = document.createElement('span');
+  title.textContent = '翻訳君';
+  title.style.cssText = `
+    font-weight: bold;
+    font-size: 16px;
+  `;
+
+  // 閉じるボタン
   const closeButton = document.createElement('button');
   closeButton.textContent = '×';
   closeButton.style.cssText = `
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 12px;
+    right: 12px;
     border: none;
     background: none;
     cursor: pointer;
@@ -40,7 +62,18 @@ function createTranslationElement() {
   `;
   closeButton.onclick = () => container.remove();
 
+  // ダークモード検出とカラー設定
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    container.style.setProperty('--chatgpt-bg-color', '#2d2d2d');
+    container.style.setProperty('--chatgpt-text-color', '#ffffff');
+  }
+
+  // 要素を組み立て
+  header.appendChild(icon);
+  header.appendChild(title);
+  container.appendChild(header);
   container.appendChild(closeButton);
+
   return container;
 }
 
