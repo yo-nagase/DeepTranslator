@@ -13,9 +13,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (data.openaiApiKey) {
       input.value = data.openaiApiKey;
     }
-    if (data.enableDoubleClick !== undefined) {
-      doubleClickCheckbox.checked = data.enableDoubleClick;
-    }
+    doubleClickCheckbox.checked = !!data.enableDoubleClick; // デフォルトはfalse
     if (data.enableExplanation !== undefined) {
       explanationCheckbox.checked = data.enableExplanation;
     }
