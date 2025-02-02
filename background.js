@@ -82,12 +82,10 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
 
     translateText(selectedText)
       .then(function (translation) {
-        // 翻訳結果を通知で表示
-        chrome.notifications.create({
-          type: "basic",
-          iconUrl: "icon.png", // 用意したアイコンファイル
-          title: "翻訳結果",
-          message: translation
+        // content script に翻訳結果を送信
+        chrome.tabs.sendMessage(tab.id, {
+          action: "showTranslation",
+          translation: translation
         });
       })
       .catch(function (err) {
