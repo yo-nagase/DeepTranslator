@@ -29,16 +29,27 @@ document.addEventListener("DOMContentLoaded", function () {
     e.preventDefault();
     var apiKey = input.value.trim();
     var enableDoubleClick = doubleClickCheckbox.checked;
-    var enableExplanation = explanationCheckbox.checked;
     var selectedModel = modelSelect.value;
+
+    // APIキーのバリデーション
+    if (!apiKey) {
+      status.textContent = "APIキーを入力してください";
+      status.style.color = "#f44336";
+      return;
+    }
 
     chrome.storage.sync.set({
       openaiApiKey: apiKey,
       enableDoubleClick: enableDoubleClick,
-      enableExplanation: enableExplanation,
       model: selectedModel
     }, function () {
+      if (chrome.runtime.lastError) {
+        status.textContent = "エラー: " + chrome.runtime.lastError.message;
+        status.style.color = "#f44336";
+        return;
+      }
       status.textContent = "保存しました。";
+      status.style.color = "#4CAF50";
       setTimeout(function () {
         status.textContent = "";
       }, 2000);
