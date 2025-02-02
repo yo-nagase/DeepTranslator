@@ -186,22 +186,61 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
 
 // メッセージリスナーを修正
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.action === "speak") {
-    textToSpeech(message.text)
-      .then(audioData => {
-        // 音声データを直接Uint8Arrayとして送信
-        chrome.tabs.sendMessage(sender.tab.id, {
-          action: "playAudio",
-          audioData: Array.from(new Uint8Array(audioData)) // ArrayBufferを配列に変換
+  switch (message.action) {
+    case "speak":
+      textToSpeech(message.text)
+        .then(audioData => {
+          chrome.tabs.sendMessage(sender.tab.id, {
+            action: "playAudio",
+            audioData: Array.from(new Uint8Array(audioData))
+          });
+        })
+        .catch(error => {
+          console.error("TTS error:", error);
+          chrome.tabs.sendMessage(sender.tab.id, {
+            action: "ttsError",
+            error: error.message
+          });
         });
-      })
-      .catch(error => {
-        console.error("TTS error:", error);
-        chrome.tabs.sendMessage(sender.tab.id, {
-          action: "ttsError",
-          error: error.message
-        });
+      return true;
+
+    case "translate":
+      // まずローディング表示を送信
+      chrome.tabs.sendMessage(sender.tab.id, {
+        action: "showTranslation",
+        translation: null,
+        originalText: message.text
       });
-    return true;
+
+      translateText(message.text)
+        .then(function (result) {
+          chrome.tabs.sendMessage(sender.tab.id, {
+            action: "showTranslation",
+            translation: result.translation,
+            explanation: result.explanation,
+            originalText: message.text
+          });
+        })
+        .catch(function (err) {
+          console.error(err);
+          chrome.tabs.sendMessage(sender.tab.id, {
+            action: "showTranslation",
+            translation: "エラーが発生しました: " + err.toString(),
+            originalText: message.text
+          });
+        });
+      return true;
+  }
+});
+
+// コマンドのリスナーを追加
+chrome.commands.onCommand.addListener((command) => {
+  if (command === "translate-selection") {
+    // アクティブなタブを取得して翻訳を実行
+    chrome.tabs.query({active: true, currentWindow: true}, function(tabs) {
+      chrome.tabs.sendMessage(tabs[0].id, {
+        action: "shortcutPressed"
+      });
+    });
   }
 });

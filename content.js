@@ -370,6 +370,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       document.body.appendChild(elements.container);
       break;
 
+    case "shortcutPressed":
+      const selectedText = window.getSelection().toString().trim();
+      if (selectedText) {
+        chrome.runtime.sendMessage({ 
+          action: 'translate', 
+          text: selectedText 
+        });
+      }
+      break;
+
     case "playAudio":
       try {
         // 受け取った配列をUint8Arrayに戻す

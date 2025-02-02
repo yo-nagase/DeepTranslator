@@ -33,5 +33,14 @@
   "web_accessible_resources": [{
     "resources": ["icon.png", "welcome.html"],
     "matches": ["<all_urls>"]
-  }]
+  }],
+  "commands": {
+    "translate-selection": {
+      "suggested_key": {
+        "default": "Ctrl+Shift+1",
+        "mac": "Command+Shift+1"
+      },
+      "description": "選択したテキストを翻訳"
+    }
+  }
 }
