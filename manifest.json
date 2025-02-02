@@ -25,6 +25,9 @@
     }
   ],
   "options_page": "options.html",
+  "action": {
+    "default_popup": "history.html"
+  },
   "icons": {
     "16": "icon.png",
     "48": "icon.png",

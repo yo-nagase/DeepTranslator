@@ -169,6 +169,22 @@ chrome.contextMenus.onClicked.addListener(function (info, tab) {
 
     translateText(selectedText)
       .then(function (result) {
+        // 履歴に保存
+        chrome.storage.local.get('translationHistory', function(data) {
+          const history = data.translationHistory || [];
+          history.push({
+            originalText: selectedText,
+            translation: result.translation,
+            explanation: result.explanation,
+            timestamp: Date.now()
+          });
+          // 最新の100件のみ保持
+          if (history.length > 100) {
+            history.shift();
+          }
+          chrome.storage.local.set({ translationHistory: history });
+        });
+
         chrome.tabs.sendMessage(tab.id, {
           action: "showTranslation",
           translation: result.translation,
@@ -217,6 +233,22 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
       translateText(message.text)
         .then(function (result) {
+          // 履歴に保存
+          chrome.storage.local.get('translationHistory', function(data) {
+            const history = data.translationHistory || [];
+            history.push({
+              originalText: message.text,
+              translation: result.translation,
+              explanation: result.explanation,
+              timestamp: Date.now()
+            });
+            // 最新の100件のみ保持
+            if (history.length > 100) {
+              history.shift();
+            }
+            chrome.storage.local.set({ translationHistory: history });
+          });
+
           chrome.tabs.sendMessage(sender.tab.id, {
             action: "showTranslation",
             translation: result.translation,
